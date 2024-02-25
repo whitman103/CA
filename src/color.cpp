@@ -20,14 +20,7 @@ RuleMessage Rule::get_next_move(State inState)
         nextState = inState.currentState + 1;
     }
     char turnDirection = this->ruleString[inState.currentState];
-    MovementDirections turnEnum;
-    if (turnDirection == 'L')
-    {
-        turnEnum = MovementDirections::LEFT;
-    }
-    else
-    {
-        turnEnum = MovementDirections::RIGHT;
-    }
-    return RuleMessage{.newState = nextState, .movement_commands = {turnEnum, MovementDirections::FORWARD}};
+    std::vector<MovementDirections> turnEnum = this->ruleToMovementMap.at(turnDirection);
+    turnEnum.push_back(MovementDirections::FORWARD);
+    return RuleMessage{.newState = nextState, .movement_commands = turnEnum};
 };

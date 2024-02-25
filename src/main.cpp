@@ -33,7 +33,7 @@ struct SimWorld
 {
     const int world_xSize, world_ySize;
     std::vector<std::vector<State>> simField;
-    Rule moveRule = Rule("LRRRRLLR");
+    Rule moveRule = SquareRule("LRRRRLLR");
     const int colorDepth{4};
     void change_pixel(ColorMessage inMessage);
     sf::Uint8 *pixelDraw;

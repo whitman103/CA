@@ -28,6 +28,7 @@ typedef void (*AntMove)();
 
 enum class MovementDirections
 {
+    NONE = -1,
     LEFT = 0,
     RIGHT = 1,
     FORWARD = 2
@@ -46,7 +47,32 @@ struct Rule
     {
         this->ruleString = std::vector<char>(inRule.begin(), inRule.end());
     };
+    std::unordered_map<char, std::vector<MovementDirections>> ruleToMovementMap;
+
     RuleMessage get_next_move(State inState);
+};
+
+struct SquareRule : public Rule
+{
+    SquareRule(std::string inRule) : Rule(inRule)
+    {
+        this->ruleToMovementMap.insert({'L', {MovementDirections::LEFT}});
+        this->ruleToMovementMap.insert({'R', {MovementDirections::RIGHT}});
+    };
+};
+
+struct HexRule : public Rule
+{
+    HexRule(std::string inRule) : Rule(inRule)
+    {
+        this->ruleToMovementMap.insert({'N', {MovementDirections::NONE}});
+        this->ruleToMovementMap.insert(
+            {'U', {MovementDirections::LEFT, MovementDirections::LEFT, MovementDirections::LEFT}});
+        this->ruleToMovementMap.insert({'L2', {MovementDirections::LEFT, MovementDirections::LEFT}});
+        this->ruleToMovementMap.insert({'L1', {MovementDirections::LEFT}});
+        this->ruleToMovementMap.insert({'R1', {MovementDirections::RIGHT}});
+        this->ruleToMovementMap.insert({'R2', {MovementDirections::RIGHT, MovementDirections::RIGHT}});
+    };
 };
 
 #endif
