@@ -34,3 +34,6 @@
 CMakeFiles/
 *.cmake
 AntDraw
+outFrames/
+CMakeCache.txt
+*.dSYM

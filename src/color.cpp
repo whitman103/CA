@@ -19,7 +19,7 @@ RuleMessage Rule::get_next_move(State inState)
     {
         nextState = inState.currentState + 1;
     }
-    char turnDirection = this->ruleString[inState.currentState];
+    std::string turnDirection = this->ruleString[inState.currentState];
     std::vector<MovementDirections> turnEnum = this->ruleToMovementMap.at(turnDirection);
     turnEnum.push_back(MovementDirections::FORWARD);
     return RuleMessage{.newState = nextState, .movement_commands = turnEnum};
