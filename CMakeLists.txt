@@ -8,6 +8,7 @@ target_include_directories(AntDraw PUBLIC /opt/homebrew/include/)
 target_link_directories(AntDraw PUBLIC /opt/homebrew/lib /Users/johnwhitman/Projects/vivid)
 target_link_libraries(AntDraw -lsfml-graphics -lsfml-window -lsfml-system -lvivid)
 find_library(AntDraw sfml)
+set(CXXFLAGS "-g -O3")
 
 set(SOURCE_DIR src)
 

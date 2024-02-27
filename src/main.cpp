@@ -1,5 +1,6 @@
 #include "ant.hpp"
 #include "color.hpp"
+#include "shape_array.hpp"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
@@ -7,6 +8,17 @@
 #include <vivid/vivid.h>
 
 ColorMessage moveAnt(Ant &inAnt, std::vector<std::vector<State>> &simField, Rule &inRule)
+{
+    RuleMessage changes = inRule.get_next_move(simField[inAnt.curX][inAnt.curY]);
+    simField[inAnt.curX][inAnt.curY].currentState = changes.newState;
+    inAnt.move(changes);
+    return ColorMessage{
+        .x = inAnt.curX,
+        .y = inAnt.curY,
+        .color = (simField[inAnt.curX][inAnt.curY].get_color((double)changes.newState / inRule.ruleString.size()))};
+}
+
+ColorMessage moveAnt(HexAnt &inAnt, std::vector<std::vector<State>> &simField, Rule &inRule)
 {
     RuleMessage changes = inRule.get_next_move(simField[inAnt.curX][inAnt.curY]);
     simField[inAnt.curX][inAnt.curY].currentState = changes.newState;
@@ -33,13 +45,15 @@ struct SimWorld
 {
     const int world_xSize, world_ySize;
     std::vector<std::vector<State>> simField;
-    Rule moveRule = SquareRule("LRRRRLLR");
+    // Rule moveRule = HexRule("L1L2NUL2L1R2");
+    Rule moveRule = SquareRule("LRRRRRLLR");
     const int colorDepth{4};
     void change_pixel(ColorMessage inMessage);
-    sf::Uint8 *pixelDraw;
+    SquareSystem system;
     SimWorld(int xSize, int ySize) : world_xSize{xSize}, world_ySize{ySize}
     {
-        this->pixelDraw = (sf::Uint8 *)calloc(world_xSize * world_ySize * 4, sizeof(sf::Uint8));
+        this->system = SquareSystem(this->world_xSize, this->world_ySize);
+        this->system.init();
         this->simField.resize(this->world_xSize);
         for (uint xIndex{0}; xIndex < this->world_xSize; xIndex++)
         {
@@ -50,17 +64,29 @@ struct SimWorld
 
 void SimWorld::change_pixel(ColorMessage inMessage)
 {
-    for (uint colorIndex{0}; colorIndex < this->colorDepth; colorIndex++)
-    {
-        this->pixelDraw[this->colorDepth * (inMessage.x * this->world_xSize + inMessage.y) + colorIndex] =
-            inMessage.color[colorIndex];
-    }
+    this->system.update(inMessage.x, inMessage.y, inMessage.color);
 };
 
-void calculateImage(Ant &inAnt, SimWorld &simWorld)
+bool calculateImage(Ant &inAnt, SimWorld &simWorld)
 {
     ColorMessage turnPixel = moveAnt(inAnt, simWorld.simField, simWorld.moveRule);
+    if (turnPixel.x < 0 || turnPixel.x > simWorld.world_xSize || turnPixel.y < 0 || turnPixel.y > simWorld.world_ySize)
+    {
+        return false;
+    }
     simWorld.change_pixel(turnPixel);
+    return true;
+};
+
+bool calculateImage(HexAnt &inAnt, SimWorld &simWorld)
+{
+    ColorMessage turnPixel = moveAnt(inAnt, simWorld.simField, simWorld.moveRule);
+    if (turnPixel.x < 0 || turnPixel.x > simWorld.world_xSize || turnPixel.y < 0 || turnPixel.y > simWorld.world_ySize)
+    {
+        return false;
+    }
+    simWorld.change_pixel(turnPixel);
+    return true;
 };
 
 int main()
@@ -81,16 +107,12 @@ int main()
 
     State::colorMap = vivid::ColorMap(vivid::ColorMap::Preset::Plasma);
 
-    SimWorld simWorld(500, 500);
+    SimWorld simWorld(100, 100);
 
-    sf::View view;
-
-    view.setSize({.25f * window_xSize, .25f * window_ySize});
-    view.setCenter(100, 50);
-    window.setView(view);
-
-    Ant useAnt{.curX = (int)(100), .curY = (int)(100), .curDirection = Direction::RIGHT};
+    // HexAnt useAnt{.curX = (int)(25), .curY = (int)(45), .curDirection = HexDirection::E};
+    Ant useAnt{.curX = (int)(50), .curY = (int)(50), .curDirection = Direction::RIGHT};
     int frameCount(0);
+    int frameNumber(0);
     while (window.isOpen())
     {
         sf::Event event;
@@ -107,23 +129,15 @@ int main()
         if (!wait)
         {
             window.clear();
-            calculateImage(useAnt, simWorld);
-            // calculateImage(&passArray, secondAnt, simField, moveRule);
-            texture.update(simWorld.pixelDraw);
-            window.draw(sprite);
+            if (!calculateImage(useAnt, simWorld))
+            {
+                return 0;
+            };
+            window.draw(simWorld.system);
+            frameCount += 1;
             window.display();
-            /* if (frameCount > 500)
-            {
-                frameCount = 0;
-                wait = true;
-            }
-            else
-            {
-                frameCount += 1;
-            } */
         }
     }
-    free(simWorld.pixelDraw);
 
     return 0;
 }
